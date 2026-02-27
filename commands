@@ -1,1 +1,7 @@
 python -m pip install -U langchain-core langchain-experimental langchain-neo4j langchain-ollama python-dotenv
+
+python -m pip install -U langchain-text-splitters
+
+python -m pip uninstall -y numpy spacy thinc
+python -m pip install "numpy<2"
+python -m pip install -U spacy
