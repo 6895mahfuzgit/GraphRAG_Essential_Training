@@ -7,9 +7,12 @@ from langchain_neo4j import Neo4jGraph,GraphCypherQAChain
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
 
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
+
+import warnings
+
+warnings.filterwarnings("ignore", category=ResourceWarning)
 
 load_dotenv()  # loads .env into os.environ (and won’t override existing env vars by default) [web:45]
 
@@ -67,19 +70,35 @@ print(enhanced_graph.schema)
 # graph.add_graph_documents(graph_docs, include_source=True)  # method on Neo4jGraph [web:20]
 
 
-
 CYPHER_GENERATION_TEMPLATE = """
-You are an expert Neo4j Developer translating user questions into Cypher to 
-answer questions about skiing.
-Convert the user's question based on the schema.
-When you are presented with query properties such as id's like "grass skiing", 
-be sure to convert the first letter to capital case, such as "Grass Skiing" 
-before you run the Cypher query.
+Write ONE Cypher query for this medical Neo4j graph.
+
+Rules:
+- Use only labels/relationships/properties from the schema.
+- Every returned variable must be defined in MATCH/OPTIONAL MATCH.
+- Prefer OPTIONAL MATCH so results don’t disappear.
+- Support “any string match”: use case-insensitive substring search
+  `toLower(value) CONTAINS toLower(q)` (q comes from the user question). [web:45]
+- Return at most 50 rows.
+- Output ONLY Cypher (no markdown, no explanation).
+
+Example Cypher:
+WITH "gastroscopy" AS q
+OPTIONAL MATCH (d:Document)
+WHERE d.text IS NOT NULL AND toLower(d.text) CONTAINS toLower(q)
+RETURN
+  'DocumentTextMatch' AS resultType,
+  d.text AS matchedValue,
+  d.source AS source,
+  d.page_label AS page_label
+LIMIT 50
 
 
 Schema: {schema}
 Question: {question}
+Cypher:
 """
+
 
 cypher_generation_prompt = PromptTemplate(
     template=CYPHER_GENERATION_TEMPLATE,
@@ -95,7 +114,16 @@ cypher_chain = GraphCypherQAChain.from_llm(
     allow_dangerous_requests=True
 )
 
-cypher_chain.invoke({"query": "summary the report"})
+try:
+    cypher_chain.invoke({"query": "gastroscopy report"})
+finally:
+    # close graph resources
+    enhanced_graph.close()
+    graph.close()
+
+    # close LLM resources (if available in your version)
+    if hasattr(llm, "close"):
+        llm.close()
 
 # Updated query strings for the Ada Lovelace text
 # query_string = """
