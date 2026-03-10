@@ -1,0 +1,54 @@
+model:
+  backbone_type: vit_base_patch16_224
+  pretrained: true
+  embedding_dim: 256
+  fusion_method: cross_attention
+
+data:
+  csv_path: ./train.csv
+  image_dir: ./data/images
+  image_size: 224
+  num_workers: 4
+  pin_memory: true
+
+ssl:
+  batch_size: 16
+  learning_rate: 0.0001
+  temperature: 0.1
+  epochs: 10
+  projection_dim: 128
+
+training:
+  batch_size: 8
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  mixed_precision: true
+  gradient_accumulation_steps: 2
+  early_stopping_patience: 5
+  epochs: 20
+  checkpoint_dir: checkpoints
+  log_dir: logs
+  label_smoothing: 0.05
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  mapping_path: checkpoints/mappings.json
+  temperature_path: checkpoints/temperature.json
+  auto_calibrate_after_train: true
+
+inference:
+  tta_views: 4
+  top_k: 3
+
+medical:
+  enable_abstention: true
+  accept_threshold: 0.80
+  review_threshold: 0.55
+  ood_distance_threshold: 1.25
+  min_blur_score: 80.0
+  min_brightness: 35.0
+  max_brightness: 220.0
+  min_contrast: 18.0
+  save_audit_logs: true
+  audit_log_path: logs/medical_audit.jsonl
+  require_known_study: false
+  prototype_path: checkpoints/prototypes.pt

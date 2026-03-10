@@ -1,0 +1,6 @@
+python endoscopy_ai_medical.py --mode predict --weights checkpoints/model_best.pt --server
+
+http://127.0.0.1:8000/predict
+
+study_name
+file
