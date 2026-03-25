@@ -1,0 +1,32 @@
+// Create exact match and range indexes for fast filtering
+CREATE INDEX patient_gender IF NOT EXISTS FOR (p:Patient) ON (p.gender);
+CREATE INDEX patient_age IF NOT EXISTS FOR (p:Patient) ON (p.age);
+CREATE INDEX organ_name_normalized IF NOT EXISTS FOR (o:Organ) ON (o.name_normalized);
+CREATE INDEX finding_term_name_normalized IF NOT EXISTS FOR (ft:FindingTerm) ON (ft.name_normalized);
+CREATE INDEX measurement_max_dimension_cm IF NOT EXISTS FOR (m:Measurement) ON (m.max_dimension_cm);
+
+// Create Full-Text indexes for the keyword searches
+CREATE FULLTEXT INDEX study_text_ft IF NOT EXISTS FOR (s:Study) ON EACH [s.clinical_instruction, s.severity];
+CREATE FULLTEXT INDEX finding_text_ft IF NOT EXISTS FOR (f:Finding) ON EACH [f.text];
+
+
+// 1. Drop the old vector index so Neo4j stops holding it in memory
+//DROP INDEX finding_text_embeddings IF EXISTS;
+
+// 2. Remove the embedding property from all Finding nodes (Run this in batches if it times out)
+//MATCH (f:Finding) 
+//WHERE f.embedding IS NOT NULL
+//CALL {
+ // WITH f
+  //REMOVE f.embedding
+//} IN TRANSACTIONS OF 50000 ROWS;
+
+
+female patient over 60 general modality CHEST (upright) exam Required Attention  severity
+
+male patient over 60  with Unspecified severity have 3 cm larger   kidneys with CT modality
+
+
+
+nodules and cysts are detected in both breasts about 0.1-0.8 cm.
+autosearch: microcalcification
